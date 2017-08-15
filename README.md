@@ -1,5 +1,10 @@
 # go-assets
 
+[![Build Status](https://travis-ci.org/ZoltanLajosKis/go-assets.svg?branch=master)](https://travis-ci.org/ZoltanLajosKis/go-assets)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ZoltanLajosKis/go-assets)](https://goreportcard.com/report/github.com/ZoltanLajosKis/go-assets)
+[![Coverage Status](https://coveralls.io/repos/github/ZoltanLajosKis/go-assets/badge.svg?branch=master)](https://coveralls.io/github/ZoltanLajosKis/go-assets?branch=master)
+[![GoDoc](https://godoc.org/github.com/ZoltanLajosKis/go-assets?status.svg)](https://godoc.org/github.com/ZoltanLajosKis/go-assets)
+
 Go-assets collects assets from different sources and transforms them into Go
 code using [vfsgen][vfsgen]. The generated code implements a
 [http.FileSystem][httpfs] that contains the assets. This can be used by HTTP
