@@ -1,9 +1,12 @@
 package assets
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"time"
@@ -17,6 +20,8 @@ type ArchiveFormat int
 const (
 	// ArchiveZip is for the zip file format.
 	ArchiveZip = iota
+	// ArchiveTarGz is for the tar.gz file format.
+	ArchiveTarGz
 )
 
 var (
@@ -55,6 +60,8 @@ func processArchive(arch *Archive, name string, data []byte, modTime time.Time, 
 	switch arch.Format {
 	case ArchiveZip:
 		return processZip(arch, name, data, files)
+	case ArchiveTarGz:
+		return processTarGz(arch, name, data, files)
 	default:
 		return ErrArchiveUnknown
 	}
@@ -88,6 +95,44 @@ func processZip(arch *Archive, name string, data []byte, files mfs.Files) error 
 
 		log.Printf("Created asset: %s ...", fp)
 		files[fp] = &mfs.File{fdata, fh.ModTime()}
+	}
+
+	return nil
+}
+
+func processTarGz(arch *Archive, name string, data []byte, files mfs.Files) error {
+	zr, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return &ArchiveError{name, err}
+	}
+
+	r := tar.NewReader(zr)
+
+	for {
+		h, err := r.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return &ArchiveError{name, err}
+		}
+
+		if h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA {
+			continue
+		}
+
+		fp := mapPath(arch.PathMapper, h.Name)
+		if fp == "" {
+			continue
+		}
+
+		fdata, err := ioutil.ReadAll(r)
+		if err != nil {
+			return &ArchiveError{name, err}
+		}
+
+		log.Printf("Created asset: %s ...", fp)
+		files[fp] = &mfs.File{fdata, h.ModTime}
 	}
 
 	return nil

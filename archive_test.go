@@ -1,8 +1,11 @@
 package assets
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"compress/gzip"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -124,6 +127,102 @@ func TestArchiveZipInvalid(t *testing.T) {
 
 	err := processArchive(&Archive{ArchiveZip, nil}, "arch.zip", []byte("1234"), time.Now(), fs)
 	assertEqual(t, err, &ArchiveError{"arch.zip", zip.ErrFormat})
+}
+
+func TestArchiveTarGz(t *testing.T) {
+	fs := make(mfs.Files)
+	buf := new(bytes.Buffer)
+	zw := gzip.NewWriter(buf)
+	w := tar.NewWriter(zw)
+
+	mt1 := time.Unix(1300000000, 0)
+	fh1 := &tar.Header{Name: "test/file1.txt", Size: int64(6), ModTime: mt1}
+	w.WriteHeader(fh1)
+	w.Write([]byte("File 1"))
+
+	mt2 := time.Unix(1400000000, 0)
+	fh2 := &tar.Header{Name: "test/file2.txt", Size: int64(6), ModTime: mt2}
+	w.WriteHeader(fh2)
+	w.Write([]byte("File 2"))
+
+	mt3 := time.Unix(1500000000, 0)
+	fh3 := &tar.Header{Name: "test/file3.txt", Size: int64(6), ModTime: mt3}
+	w.WriteHeader(fh3)
+	w.Write([]byte("File 3"))
+
+	dh := &tar.Header{Name: "test/dir", Typeflag: tar.TypeDir}
+	w.WriteHeader(dh)
+
+	w.Close()
+	zw.Close()
+
+	err := processArchive(&Archive{ArchiveTarGz, nil}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
+	assertEqual(t, err, nil)
+
+	file1, _ := fs["test/file1.txt"]
+	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1})
+	file2, _ := fs["test/file2.txt"]
+	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2})
+	file3, _ := fs["test/file3.txt"]
+	assertEqual(t, file3, &mfs.File{[]byte("File 3"), mt3})
+	_, ok := fs["test/dir"]
+	assertEqual(t, ok, false)
+}
+
+func TestArchiveTarGzFilter(t *testing.T) {
+	fs := make(mfs.Files)
+	buf := new(bytes.Buffer)
+	zw := gzip.NewWriter(buf)
+	w := tar.NewWriter(zw)
+
+	mt1 := time.Unix(1300000000, 0)
+	fh1 := &tar.Header{Name: "test/file1.txt", Size: int64(6), ModTime: mt1}
+	w.WriteHeader(fh1)
+	w.Write([]byte("File 1"))
+
+	mt2 := time.Unix(1400000000, 0)
+	fh2 := &tar.Header{Name: "test/file2.txt", Size: int64(6), ModTime: mt2}
+	w.WriteHeader(fh2)
+	w.Write([]byte("File 2"))
+
+	mt3 := time.Unix(1500000000, 0)
+	fh3 := &tar.Header{Name: "test/file3.txt", Size: int64(6), ModTime: mt3}
+	w.WriteHeader(fh3)
+	w.Write([]byte("File 3"))
+
+	dh := &tar.Header{Name: "test/dir", Typeflag: tar.TypeDir}
+	w.WriteHeader(dh)
+
+	w.Close()
+	zw.Close()
+
+	mapper := func(s string) string {
+		switch s {
+		case "test/file1.txt", "test/file2.txt":
+			return s
+		default:
+			return ""
+		}
+	}
+
+	err := processArchive(&Archive{ArchiveTarGz, mapper}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
+	assertEqual(t, err, nil)
+
+	file1, _ := fs["test/file1.txt"]
+	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1})
+	file2, _ := fs["test/file2.txt"]
+	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2})
+	_, ok := fs["test/file3.txt"]
+	assertEqual(t, ok, false)
+	_, ok = fs["test/dir"]
+	assertEqual(t, ok, false)
+}
+
+func TestArchiveTarGzInvalid(t *testing.T) {
+	fs := make(mfs.Files)
+
+	err := processArchive(&Archive{ArchiveTarGz, nil}, "arch.tar.gz", []byte("1234"), time.Now(), fs)
+	assertEqual(t, err, &ArchiveError{"arch.tar.gz", io.ErrUnexpectedEOF})
 }
 
 func TestArchiveUnknown(t *testing.T) {
