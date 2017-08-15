@@ -42,13 +42,13 @@ var (
     // Retrieve "remote.txt" from www.example.com. Verify the MD5 checksum.
     // Store it as "docs/text2.txt".
     {"docs/text2.txt",
-      "https://example.com/remote.txt",
+      "https://www.example.com/remote.txt",
       &as.Checksum{as.ChecksumMD5, "1234567890abcdef1234567890abcdef"}, nil},
     // Retrieve "images.zip" from www.example.com. Verify the MD5 checksum.
     // Extract files from the archive, only keep files in the "img" directory
     // and store them in the "images" directory (see imagesMapper function).
     {"images.zip",
-      "https://example.com/images/images.zip",
+      "https://www.example.com/images/images.zip",
       &as.Checksum{as.ChecksumMD5, "1234567890abcdef1234567890abcdef"},
       &as.Archive{as.ArchiveZip, imagesMapper}},
   }
