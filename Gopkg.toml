@@ -1,0 +1,11 @@
+[[constraint]]
+  name = "github.com/ZoltanLajosKis/go-mapfs"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/shurcooL/vfsgen"
+  branch = "master"
+
+[[constraint]]
+  name = "golang.org/x/tools"
+  branch = "master"
