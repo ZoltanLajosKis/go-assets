@@ -23,6 +23,10 @@ func TestRetrieveHttp(t *testing.T) {
 
 	_, _, err = retrieve(strings.Join([]string{svr.URL, "/xxxx"}, ""))
 	assertNotEqual(t, err, nil)
+
+	_, _, err = retrieve("http://invalid.u.r.l")
+	assertNotEqual(t, err, nil)
+	assertEqual(t, strings.Contains(err.Error(), "http://invalid.u.r.l"), true)
 }
 
 func TestRetrieveFile(t *testing.T) {
