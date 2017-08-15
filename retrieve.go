@@ -33,7 +33,7 @@ func retrieveHTTP(loc string) ([]byte, time.Time, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, time.Time{}, &RetrieveError{loc, errors.New(string(resp.StatusCode))}
 	}
 
