@@ -13,14 +13,14 @@ import (
 type ChecksumAlgo int
 
 const (
-	// ChecksumMD5 is the MD5 algorithm.
-	ChecksumMD5 = iota
-	// ChecksumSHA1 is the SHA1 algorithm.
-	ChecksumSHA1
-	// ChecksumSHA256 is the SHA256 algorithm.
-	ChecksumSHA256
-	// ChecksumSHA512 is the SHA512 algorithm.
-	ChecksumSHA512
+	// MD5 is the MD5 algorithm.
+	MD5 = iota
+	// SHA1 is the SHA1 algorithm.
+	SHA1
+	// SHA256 is the SHA256 algorithm.
+	SHA256
+	// SHA512 is the SHA512 algorithm.
+	SHA512
 )
 
 var (
@@ -42,13 +42,13 @@ func verifyChecksum(chksum *Checksum, data []byte) error {
 	}
 
 	switch chksum.Algo {
-	case ChecksumMD5:
+	case MD5:
 		return compare(chksum.Value, calcMD5(data))
-	case ChecksumSHA1:
+	case SHA1:
 		return compare(chksum.Value, calcSHA1(data))
-	case ChecksumSHA256:
+	case SHA256:
 		return compare(chksum.Value, calcSHA256(data))
-	case ChecksumSHA512:
+	case SHA512:
 		return compare(chksum.Value, calcSHA512(data))
 	default:
 		return ErrChecksumUnknown

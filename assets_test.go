@@ -28,7 +28,7 @@ func TestGenerate(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	assets := []*AssetSource{
+	assets := []*Source{
 		{"assets.txt",
 			strings.Join([]string{svr.URL, "/assets.txt"}, ""), nil, nil},
 		{"retrieve_test.go",
@@ -46,7 +46,7 @@ func TestGenerateRetrieveError(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	assets := []*AssetSource{
+	assets := []*Source{
 		{"xxxx",
 			"xxxx", nil, nil},
 	}
@@ -54,6 +54,7 @@ func TestGenerateRetrieveError(t *testing.T) {
 	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)
 	assertNotEqual(t, err, nil)
 }
+
 func TestGenerateChecksumError(t *testing.T) {
 	dir, err := ioutil.TempDir("", "go-assets")
 	if err != nil {
@@ -61,9 +62,9 @@ func TestGenerateChecksumError(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	assets := []*AssetSource{
+	assets := []*Source{
 		{"retrieve_test.go",
-			"retrieve_test.go", &Checksum{ChecksumMD5, "1234"}, nil},
+			"retrieve_test.go", &Checksum{MD5, "1234"}, nil},
 	}
 
 	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)
@@ -77,9 +78,9 @@ func TestGenerateArchiveError(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	assets := []*AssetSource{
+	assets := []*Source{
 		{"retrieve_test.go",
-			"retrieve_test.go", nil, &Archive{ArchiveZip, nil}},
+			"retrieve_test.go", nil, &Archive{Zip, nil}},
 	}
 
 	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)

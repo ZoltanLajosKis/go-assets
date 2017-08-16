@@ -18,10 +18,10 @@ import (
 type ArchiveFormat int
 
 const (
-	// ArchiveZip is for the zip file format.
-	ArchiveZip = iota
-	// ArchiveTarGz is for the tar.gz file format.
-	ArchiveTarGz
+	// Zip is the zip file format.
+	Zip = iota
+	// TarGz is the tar.gz file format.
+	TarGz
 )
 
 var (
@@ -58,9 +58,9 @@ func processArchive(arch *Archive, name string, data []byte, modTime time.Time, 
 	}
 
 	switch arch.Format {
-	case ArchiveZip:
+	case Zip:
 		return processZip(arch, name, data, files)
-	case ArchiveTarGz:
+	case TarGz:
 		return processTarGz(arch, name, data, files)
 	default:
 		return ErrArchiveUnknown

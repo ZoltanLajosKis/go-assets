@@ -9,16 +9,16 @@ import (
 	"golang.org/x/tools/godoc/vfs/httpfs"
 )
 
-// AssetSource describe an asset source to be retrieved and processed.
-type AssetSource struct {
+// Source describes an asset source to be retrieved and processed.
+type Source struct {
 	Name     string
 	Location string
 	Checksum *Checksum
 	Archive  *Archive
 }
 
-// Options provide optional parameters to the Compile function.
-type Options struct {
+// Opts provides optional parameters to the Compile function.
+type Opts struct {
 	// BuildTags are the build tags in the generated source code.
 	// Defaults to no tags.
 	BuildTags string
@@ -30,7 +30,7 @@ type Options struct {
 
 // Compile retrieves and processes the specified asset sources, and
 // compiles them to source code in the specified file
-func Compile(assets []*AssetSource, filePath string, pkgName string, varName string, opts *Options) error {
+func Compile(assets []*Source, filePath string, pkgName string, varName string, opts *Opts) error {
 	files := make(mfs.Files)
 
 	for i, asset := range assets {
@@ -58,7 +58,7 @@ func Compile(assets []*AssetSource, filePath string, pkgName string, varName str
 	}
 
 	if opts == nil {
-		opts = &Options{}
+		opts = &Opts{}
 	}
 
 	if opts.VariableComment == "" {

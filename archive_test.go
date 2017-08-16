@@ -57,7 +57,7 @@ func TestArchiveZip(t *testing.T) {
 
 	w.Close()
 
-	err := processArchive(&Archive{ArchiveZip, nil}, "arch.zip", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{Zip, nil}, "arch.zip", buf.Bytes(), time.Now(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -109,7 +109,7 @@ func TestArchiveZipFilter(t *testing.T) {
 		}
 	}
 
-	err := processArchive(&Archive{ArchiveZip, mapper}, "arch.zip", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{Zip, mapper}, "arch.zip", buf.Bytes(), time.Now(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -125,7 +125,7 @@ func TestArchiveZipFilter(t *testing.T) {
 func TestArchiveZipInvalid(t *testing.T) {
 	fs := make(mfs.Files)
 
-	err := processArchive(&Archive{ArchiveZip, nil}, "arch.zip", []byte("1234"), time.Now(), fs)
+	err := processArchive(&Archive{Zip, nil}, "arch.zip", []byte("1234"), time.Now(), fs)
 	assertEqual(t, err, &ArchiveError{"arch.zip", zip.ErrFormat})
 }
 
@@ -156,7 +156,7 @@ func TestArchiveTarGz(t *testing.T) {
 	w.Close()
 	zw.Close()
 
-	err := processArchive(&Archive{ArchiveTarGz, nil}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{TarGz, nil}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -205,7 +205,7 @@ func TestArchiveTarGzFilter(t *testing.T) {
 		}
 	}
 
-	err := processArchive(&Archive{ArchiveTarGz, mapper}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{TarGz, mapper}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -221,7 +221,7 @@ func TestArchiveTarGzFilter(t *testing.T) {
 func TestArchiveTarGzInvalid(t *testing.T) {
 	fs := make(mfs.Files)
 
-	err := processArchive(&Archive{ArchiveTarGz, nil}, "arch.tar.gz", []byte("1234"), time.Now(), fs)
+	err := processArchive(&Archive{TarGz, nil}, "arch.tar.gz", []byte("1234"), time.Now(), fs)
 	assertEqual(t, err, &ArchiveError{"arch.tar.gz", io.ErrUnexpectedEOF})
 }
 
