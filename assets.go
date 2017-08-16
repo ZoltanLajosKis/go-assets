@@ -11,7 +11,7 @@ import (
 
 // Source describes an asset source to be retrieved and processed.
 type Source struct {
-	Name     string
+	Path     string
 	Location string
 	Checksum *Checksum
 	Archive  *Archive
@@ -46,7 +46,7 @@ func Compile(assets []*Source, filePath string, pkgName string, varName string, 
 			return err
 		}
 
-		err = processArchive(asset.Archive, asset.Name, data, modTime, files)
+		err = processArchive(asset.Archive, asset.Path, data, modTime, files)
 		if err != nil {
 			return err
 		}
