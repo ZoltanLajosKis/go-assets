@@ -66,6 +66,7 @@ func main() {
     "assets/assets.go",   // output source file
     "assets",             // package name in the source file
     "FS",                 // variable name for the file system
+    nil,
   ); err != nil {
     log.Panic(err)
   }

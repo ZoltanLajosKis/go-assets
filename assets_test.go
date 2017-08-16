@@ -35,7 +35,7 @@ func TestGenerate(t *testing.T) {
 			"retrieve_test.go", nil, nil},
 	}
 
-	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs")
+	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)
 	assertEqual(t, err, nil)
 }
 
@@ -51,7 +51,7 @@ func TestGenerateRetrieveError(t *testing.T) {
 			"xxxx", nil, nil},
 	}
 
-	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs")
+	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)
 	assertNotEqual(t, err, nil)
 }
 func TestGenerateChecksumError(t *testing.T) {
@@ -66,7 +66,7 @@ func TestGenerateChecksumError(t *testing.T) {
 			"retrieve_test.go", &Checksum{ChecksumMD5, "1234"}, nil},
 	}
 
-	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs")
+	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)
 	assertNotEqual(t, err, nil)
 }
 
@@ -82,7 +82,7 @@ func TestGenerateArchiveError(t *testing.T) {
 			"retrieve_test.go", nil, &Archive{ArchiveZip, nil}},
 	}
 
-	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs")
+	err = Compile(assets, filepath.Join(dir, "assets.go"), "assets", "fs", nil)
 	assertNotEqual(t, err, nil)
 }
 
