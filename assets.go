@@ -3,6 +3,7 @@ package assets
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	mfs "github.com/ZoltanLajosKis/go-mapfs"
 	"github.com/shurcooL/vfsgen"
@@ -28,9 +29,9 @@ type Opts struct {
 	VariableComment string
 }
 
-// Compile retrieves and processes the specified asset sources, and
-// compiles them to source code in the specified file
-func Compile(assets []*Source, filePath string, pkgName string, varName string, opts *Opts) error {
+// Retrieve retrieves and processes the specified asset sources, and returns
+// them using a http.FileSystem interface.
+func Retrieve(assets []*Source) (http.FileSystem, error) {
 	files := make(mfs.Files)
 
 	for i, asset := range assets {
@@ -38,21 +39,33 @@ func Compile(assets []*Source, filePath string, pkgName string, varName string, 
 
 		data, modTime, err := retrieve(asset.Location)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		err = verifyChecksum(asset.Checksum, data)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		err = processArchive(asset.Archive, asset.Path, data, modTime, files)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	fs, err := mfs.New(files)
+	if err != nil {
+		return nil, err
+	}
+
+	return httpfs.New(fs), nil
+}
+
+// Compile retrieves and processes the specified asset sources, and
+// compiles them to the specified variable in the source file.
+func Compile(assets []*Source, filePath string, pkgName string, varName string, opts *Opts) error {
+
+	fs, err := Retrieve(assets)
 	if err != nil {
 		return err
 	}
@@ -65,7 +78,7 @@ func Compile(assets []*Source, filePath string, pkgName string, varName string, 
 		opts.VariableComment = fmt.Sprintf("%s implements a http.FileSystem.", varName)
 	}
 
-	err = vfsgen.Generate(httpfs.New(fs), vfsgen.Options{
+	err = vfsgen.Generate(fs, vfsgen.Options{
 		Filename:        filePath,
 		PackageName:     pkgName,
 		BuildTags:       opts.BuildTags,
