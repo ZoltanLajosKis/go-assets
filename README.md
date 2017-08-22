@@ -46,18 +46,11 @@ var (
       &as.Checksum{as.ChecksumMD5, "1234567890abcdef1234567890abcdef"}, nil},
     // Retrieve "images.zip" from www.example.com. Verify the MD5 checksum.
     // Extract files from the archive, only keep files in the "img" directory
-    // and store them in the "images" directory (see imagesMapper function).
+    // and store them in the "images" directory of the asset filesystem.
     {"images.zip",
       "https://www.example.com/images/images.zip",
       &as.Checksum{as.ChecksumMD5, "1234567890abcdef1234567890abcdef"},
-      &as.Archive{as.ArchiveZip, imagesMapper}},
-  }
-
-  imagesMapper = func(path string) string {
-    if strings.HasPrefix(path, "img/") {
-      return strings.Replace(path, "img/", "images/", 1)
-    }
-    return ""
+      &as.Archive{as.ArchiveZip, as.ReMap("img/(.*)", "images/${1}")}},
   }
 )
 

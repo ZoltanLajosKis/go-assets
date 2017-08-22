@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"regexp"
 	"time"
 
 	mfs "github.com/ZoltanLajosKis/go-mapfs"
@@ -40,9 +41,22 @@ func (e *ArchiveError) Error() string {
 }
 
 // PathMapper specifies a function that is executed on all files in the archive.
-// The archived file will be stored under the returned path (ignoring the asset
-// source name). If "" is returned, the file is ignored.
+// The mapper receives the full path to each file in the archive and returns
+// the path to use in the asset file system. If "" is returned, the file is
+// dropped.
 type PathMapper func(string) string
+
+// ReMap returns a PathMapper that compares file paths to the input pattern
+// and maps matches to the replacement string (see Regexp.ReplaceAllString).
+func ReMap(pattern string, replacement string) PathMapper {
+	re := regexp.MustCompile(pattern)
+	return func(filePath string) string {
+		if !re.MatchString(filePath) {
+			return ""
+		}
+		return re.ReplaceAllString(filePath, replacement)
+	}
+}
 
 // Archive describes an archive format for the asset source.
 type Archive struct {
