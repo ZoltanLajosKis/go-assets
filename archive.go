@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"log"
 	"regexp"
-	"time"
 
 	mfs "github.com/ZoltanLajosKis/go-mapfs"
 )
@@ -29,16 +28,6 @@ var (
 	// ErrArchiveUnknown is returned when an invalid archive format is specified
 	ErrArchiveUnknown = errors.New("unknown archive format")
 )
-
-// ArchiveError is returned when there is a problem processing the archive
-type ArchiveError struct {
-	Path string
-	Err  error
-}
-
-func (e *ArchiveError) Error() string {
-	return e.Path + ": " + e.Err.Error()
-}
 
 // PathMapper specifies a function that is executed on all files in the archive.
 // The mapper receives the full path to each file in the archive and returns
@@ -64,21 +53,21 @@ type Archive struct {
 	PathMapper PathMapper
 }
 
-func processArchive(arch *Archive, path string, data []byte, modTime time.Time, files mfs.Files) error {
+func processArchive(arch *Archive, data []byte, files mfs.Files) error {
 	switch arch.Format {
 	case Zip:
-		return processZip(arch, path, data, files)
+		return processZip(arch, data, files)
 	case TarGz:
-		return processTarGz(arch, path, data, files)
+		return processTarGz(arch, data, files)
 	default:
 		return ErrArchiveUnknown
 	}
 }
 
-func processZip(arch *Archive, path string, data []byte, files mfs.Files) error {
+func processZip(arch *Archive, data []byte, files mfs.Files) error {
 	r, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
-		return &ArchiveError{path, err}
+		return err
 	}
 
 	for _, fh := range r.File {
@@ -93,12 +82,12 @@ func processZip(arch *Archive, path string, data []byte, files mfs.Files) error 
 
 		fr, err := fh.Open()
 		if err != nil {
-			return &ArchiveError{path, err}
+			return err
 		}
 
 		fdata, err := ioutil.ReadAll(fr)
 		if err != nil {
-			return &ArchiveError{path, err}
+			return err
 		}
 
 		log.Printf("Created asset: %s ...", fp)
@@ -108,10 +97,10 @@ func processZip(arch *Archive, path string, data []byte, files mfs.Files) error 
 	return nil
 }
 
-func processTarGz(arch *Archive, path string, data []byte, files mfs.Files) error {
+func processTarGz(arch *Archive, data []byte, files mfs.Files) error {
 	zr, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
-		return &ArchiveError{path, err}
+		return err
 	}
 
 	r := tar.NewReader(zr)
@@ -122,7 +111,7 @@ func processTarGz(arch *Archive, path string, data []byte, files mfs.Files) erro
 			break
 		}
 		if err != nil {
-			return &ArchiveError{path, err}
+			return err
 		}
 
 		if h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA {
@@ -136,7 +125,7 @@ func processTarGz(arch *Archive, path string, data []byte, files mfs.Files) erro
 
 		fdata, err := ioutil.ReadAll(r)
 		if err != nil {
-			return &ArchiveError{path, err}
+			return err
 		}
 
 		log.Printf("Created asset: %s ...", fp)

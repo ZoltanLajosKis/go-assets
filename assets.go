@@ -39,13 +39,13 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 
 		data, modTime, err := retrieve(source.Location)
 		if err != nil {
-			return nil, err
+			return nil, &RetrieveError{source.Location, err}
 		}
 
 		if source.Checksum != nil {
 			err = verifyChecksum(source.Checksum, data)
 			if err != nil {
-				return nil, err
+				return nil, &ChecksumError{source.Location, err}
 			}
 		}
 
@@ -55,9 +55,9 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 			continue
 		}
 
-		err = processArchive(source.Archive, source.Path, data, modTime, files)
+		err = processArchive(source.Archive, data, files)
 		if err != nil {
-			return nil, err
+			return nil, &ArchiveError{source.Location, err}
 		}
 	}
 
@@ -98,4 +98,34 @@ func Compile(sources []*Source, filePath string, pkgName string, varName string,
 	}
 
 	return nil
+}
+
+// RetrieveError is returned when there is a problem retrieving an asset source
+type RetrieveError struct {
+	Location string
+	Err      error
+}
+
+func (e *RetrieveError) Error() string {
+	return e.Location + ": " + e.Err.Error()
+}
+
+// ChecksumError is returned when there is a checksum problem with an asset source
+type ChecksumError struct {
+	Location string
+	Err      error
+}
+
+func (e *ChecksumError) Error() string {
+	return e.Location + ": " + e.Err.Error()
+}
+
+// ArchiveError is returned when there is a problem processing the archive
+type ArchiveError struct {
+	Path string
+	Err  error
+}
+
+func (e *ArchiveError) Error() string {
+	return e.Path + ": " + e.Err.Error()
 }

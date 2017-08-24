@@ -43,7 +43,7 @@ func TestArchiveZip(t *testing.T) {
 
 	w.Close()
 
-	err := processArchive(&Archive{Zip, nil}, "arch.zip", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{Zip, nil}, buf.Bytes(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -95,7 +95,7 @@ func TestArchiveZipFilter(t *testing.T) {
 		}
 	}
 
-	err := processArchive(&Archive{Zip, mapper}, "arch.zip", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{Zip, mapper}, buf.Bytes(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -138,8 +138,7 @@ func TestArchiveZipReMap(t *testing.T) {
 
 	w.Close()
 
-	err := processArchive(&Archive{Zip, ReMap("(test/file[12].txt)", "${1}")},
-		"arch.zip", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{Zip, ReMap("(test/file[12].txt)", "${1}")}, buf.Bytes(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -155,8 +154,8 @@ func TestArchiveZipReMap(t *testing.T) {
 func TestArchiveZipInvalid(t *testing.T) {
 	fs := make(mfs.Files)
 
-	err := processArchive(&Archive{Zip, nil}, "arch.zip", []byte("1234"), time.Now(), fs)
-	assertEqual(t, err, &ArchiveError{"arch.zip", zip.ErrFormat})
+	err := processArchive(&Archive{Zip, nil}, []byte("1234"), fs)
+	assertEqual(t, err, zip.ErrFormat)
 }
 
 func TestArchiveTarGz(t *testing.T) {
@@ -186,7 +185,7 @@ func TestArchiveTarGz(t *testing.T) {
 	w.Close()
 	zw.Close()
 
-	err := processArchive(&Archive{TarGz, nil}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{TarGz, nil}, buf.Bytes(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -235,7 +234,7 @@ func TestArchiveTarGzFilter(t *testing.T) {
 		}
 	}
 
-	err := processArchive(&Archive{TarGz, mapper}, "arch.tar.gz", buf.Bytes(), time.Now(), fs)
+	err := processArchive(&Archive{TarGz, mapper}, buf.Bytes(), fs)
 	assertEqual(t, err, nil)
 
 	file1, _ := fs["test/file1.txt"]
@@ -251,14 +250,13 @@ func TestArchiveTarGzFilter(t *testing.T) {
 func TestArchiveTarGzInvalid(t *testing.T) {
 	fs := make(mfs.Files)
 
-	err := processArchive(&Archive{TarGz, nil}, "arch.tar.gz", []byte("1234"), time.Now(), fs)
-	assertEqual(t, err, &ArchiveError{"arch.tar.gz", io.ErrUnexpectedEOF})
+	err := processArchive(&Archive{TarGz, nil}, []byte("1234"), fs)
+	assertEqual(t, err, io.ErrUnexpectedEOF)
 }
 
 func TestArchiveUnknown(t *testing.T) {
 	fs := make(mfs.Files)
-	mt := time.Unix(1500000000, 0)
 
-	err := processArchive(&Archive{-1, nil}, "test/file1.txt", []byte("Test"), mt, fs)
+	err := processArchive(&Archive{-1, nil}, []byte("Test"), fs)
 	assertEqual(t, err, ErrArchiveUnknown)
 }
