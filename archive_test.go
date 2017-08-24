@@ -13,20 +13,6 @@ import (
 	mfs "github.com/ZoltanLajosKis/go-mapfs"
 )
 
-func TestArchiveNil(t *testing.T) {
-	fs := make(mfs.Files)
-	mt := time.Unix(1500000000, 0)
-
-	err := processArchive(nil, "test/file1.txt", []byte("Test"), mt, fs)
-	assertEqual(t, err, nil)
-
-	f1, _ := fs["test/file1.txt"]
-	assertEqual(t, f1, &mfs.File{[]byte("Test"), mt})
-
-	_, ok := fs["test/file2.txt"]
-	assertEqual(t, ok, false)
-}
-
 func TestArchiveZip(t *testing.T) {
 	fs := make(mfs.Files)
 

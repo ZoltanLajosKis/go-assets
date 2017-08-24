@@ -42,9 +42,17 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 			return nil, err
 		}
 
-		err = verifyChecksum(source.Checksum, data)
-		if err != nil {
-			return nil, err
+		if source.Checksum != nil {
+			err = verifyChecksum(source.Checksum, data)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if source.Archive == nil {
+			log.Printf("Created asset: %s ...", source.Path)
+			files[source.Path] = &mfs.File{data, modTime}
+			continue
 		}
 
 		err = processArchive(source.Archive, source.Path, data, modTime, files)

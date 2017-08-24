@@ -37,10 +37,6 @@ type Checksum struct {
 }
 
 func verifyChecksum(chksum *Checksum, data []byte) error {
-	if chksum == nil {
-		return nil
-	}
-
 	switch chksum.Algo {
 	case MD5:
 		return compare(chksum.Value, calcMD5(data))

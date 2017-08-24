@@ -65,12 +65,6 @@ type Archive struct {
 }
 
 func processArchive(arch *Archive, path string, data []byte, modTime time.Time, files mfs.Files) error {
-	if arch == nil {
-		log.Printf("Created asset: %s ...", path)
-		files[path] = &mfs.File{data, modTime}
-		return nil
-	}
-
 	switch arch.Format {
 	case Zip:
 		return processZip(arch, path, data, files)

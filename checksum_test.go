@@ -4,11 +4,6 @@ import (
 	"testing"
 )
 
-func TestChecksumNil(t *testing.T) {
-	err := verifyChecksum(nil, []byte("Assets"))
-	assertEqual(t, err, nil)
-}
-
 func TestChecksumMD5(t *testing.T) {
 	err := verifyChecksum(&Checksum{MD5,
 		"9aedeaf1f77b8642abe528503b8c5de8"}, []byte("Assets"))
