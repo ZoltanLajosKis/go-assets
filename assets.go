@@ -31,23 +31,23 @@ type Opts struct {
 
 // Retrieve retrieves and processes the specified asset sources, and returns
 // them using a http.FileSystem interface.
-func Retrieve(assets []*Source) (http.FileSystem, error) {
+func Retrieve(sources []*Source) (http.FileSystem, error) {
 	files := make(mfs.Files)
 
-	for i, asset := range assets {
-		log.Printf("Processing asset source (%d/%d): %s ...", i+1, len(assets), asset.Location)
+	for i, source := range sources {
+		log.Printf("Processing asset source (%d/%d): %s ...", i+1, len(sources), source.Location)
 
-		data, modTime, err := retrieve(asset.Location)
+		data, modTime, err := retrieve(source.Location)
 		if err != nil {
 			return nil, err
 		}
 
-		err = verifyChecksum(asset.Checksum, data)
+		err = verifyChecksum(source.Checksum, data)
 		if err != nil {
 			return nil, err
 		}
 
-		err = processArchive(asset.Archive, asset.Path, data, modTime, files)
+		err = processArchive(source.Archive, source.Path, data, modTime, files)
 		if err != nil {
 			return nil, err
 		}
@@ -63,9 +63,9 @@ func Retrieve(assets []*Source) (http.FileSystem, error) {
 
 // Compile retrieves and processes the specified asset sources, and
 // compiles them to the specified variable in the source file.
-func Compile(assets []*Source, filePath string, pkgName string, varName string, opts *Opts) error {
+func Compile(sources []*Source, filePath string, pkgName string, varName string, opts *Opts) error {
 
-	fs, err := Retrieve(assets)
+	fs, err := Retrieve(sources)
 	if err != nil {
 		return err
 	}
