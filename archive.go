@@ -8,10 +8,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"regexp"
-
-	mfs "github.com/ZoltanLajosKis/go-mapfs"
 )
 
 // ArchiveFormat enumerates archive formats.
@@ -53,22 +50,24 @@ type Archive struct {
 	PathMapper PathMapper
 }
 
-func processArchive(arch *Archive, data []byte, files mfs.Files) error {
+func processArchive(arch *Archive, data []byte) ([]*file, error) {
 	switch arch.Format {
 	case Zip:
-		return processZip(arch, data, files)
+		return processZip(arch, data)
 	case TarGz:
-		return processTarGz(arch, data, files)
+		return processTarGz(arch, data)
 	default:
-		return ErrArchiveUnknown
+		return nil, ErrArchiveUnknown
 	}
 }
 
-func processZip(arch *Archive, data []byte, files mfs.Files) error {
+func processZip(arch *Archive, data []byte) ([]*file, error) {
 	r, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	files := []*file{}
 
 	for _, fh := range r.File {
 		if fh.FileInfo().IsDir() {
@@ -82,28 +81,28 @@ func processZip(arch *Archive, data []byte, files mfs.Files) error {
 
 		fr, err := fh.Open()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		fdata, err := ioutil.ReadAll(fr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		log.Printf("Created asset: %s ...", fp)
-		files[fp] = &mfs.File{fdata, fh.ModTime()}
+		files = append(files, &file{fp, fdata, fh.ModTime()})
 	}
 
-	return nil
+	return files, nil
 }
 
-func processTarGz(arch *Archive, data []byte, files mfs.Files) error {
+func processTarGz(arch *Archive, data []byte) ([]*file, error) {
 	zr, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r := tar.NewReader(zr)
+	files := []*file{}
 
 	for {
 		h, err := r.Next()
@@ -111,7 +110,7 @@ func processTarGz(arch *Archive, data []byte, files mfs.Files) error {
 			break
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA {
@@ -125,14 +124,13 @@ func processTarGz(arch *Archive, data []byte, files mfs.Files) error {
 
 		fdata, err := ioutil.ReadAll(r)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		log.Printf("Created asset: %s ...", fp)
-		files[fp] = &mfs.File{fdata, h.ModTime}
+		files = append(files, &file{fp, fdata, h.ModTime})
 	}
 
-	return nil
+	return files, nil
 }
 
 func mapPath(mapper PathMapper, path string) string {

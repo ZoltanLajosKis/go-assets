@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	mfs "github.com/ZoltanLajosKis/go-mapfs"
 	"github.com/shurcooL/vfsgen"
@@ -29,6 +30,12 @@ type Opts struct {
 	VariableComment string
 }
 
+type file struct {
+	path    string
+	data    []byte
+	modTime time.Time
+}
+
 // Retrieve retrieves and processes the specified asset sources, and returns
 // them using a http.FileSystem interface.
 func Retrieve(sources []*Source) (http.FileSystem, error) {
@@ -37,13 +44,13 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 	for i, source := range sources {
 		log.Printf("Processing asset source (%d/%d): %s ...", i+1, len(sources), source.Location)
 
-		data, modTime, err := retrieve(source.Location)
+		file, err := retrieve(source.Location)
 		if err != nil {
 			return nil, &RetrieveError{source.Location, err}
 		}
 
 		if source.Checksum != nil {
-			err = verifyChecksum(source.Checksum, data)
+			err = verifyChecksum(source.Checksum, file.data)
 			if err != nil {
 				return nil, &ChecksumError{source.Location, err}
 			}
@@ -51,14 +58,20 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 
 		if source.Archive == nil {
 			log.Printf("Created asset: %s ...", source.Path)
-			files[source.Path] = &mfs.File{data, modTime}
+			files[source.Path] = &mfs.File{file.data, file.modTime}
 			continue
 		}
 
-		err = processArchive(source.Archive, data, files)
+		archFiles, err := processArchive(source.Archive, file.data)
 		if err != nil {
 			return nil, &ArchiveError{source.Location, err}
 		}
+
+		for _, file := range archFiles {
+			log.Printf("Created asset: %s ...", file.path)
+			files[file.path] = &mfs.File{file.data, file.modTime}
+		}
+
 	}
 
 	fs, err := mfs.New(files)

@@ -17,25 +17,25 @@ func TestRetrieveHttp(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
 	defer svr.Close()
-	data, _, err := retrieve(strings.Join([]string{svr.URL, "/assets.txt"}, ""))
+	file, err := retrieve(strings.Join([]string{svr.URL, "/assets.txt"}, ""))
 	assertEqual(t, err, nil)
-	assertEqual(t, data, []byte("Assets."))
+	assertEqual(t, file.data, []byte("Assets."))
 
-	_, _, err = retrieve(strings.Join([]string{svr.URL, "/xxxx"}, ""))
+	_, err = retrieve(strings.Join([]string{svr.URL, "/xxxx"}, ""))
 	assertNotEqual(t, err, nil)
 
-	_, _, err = retrieve("http://invalid.u.r.l")
+	_, err = retrieve("http://invalid.u.r.l")
 	assertNotEqual(t, err, nil)
 	assertEqual(t, strings.Contains(err.Error(), "http://invalid.u.r.l"), true)
 }
 
 func TestRetrieveFile(t *testing.T) {
-	data, _, err := retrieve("retrieve_test.go")
+	file, err := retrieve("retrieve_test.go")
 	assertEqual(t, err, nil)
-	assertEqual(t, len(data) > 0, true)
+	assertEqual(t, len(file.data) > 0, true)
 }
 
 func TestRetrieveFileNotExist(t *testing.T) {
-	_, _, err := retrieve("xxxx")
+	_, err := retrieve("xxxx")
 	assertNotEqual(t, err, nil)
 }

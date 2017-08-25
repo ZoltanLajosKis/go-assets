@@ -9,13 +9,9 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	mfs "github.com/ZoltanLajosKis/go-mapfs"
 )
 
 func TestArchiveZip(t *testing.T) {
-	fs := make(mfs.Files)
-
 	buf := new(bytes.Buffer)
 	w := zip.NewWriter(buf)
 
@@ -43,22 +39,16 @@ func TestArchiveZip(t *testing.T) {
 
 	w.Close()
 
-	err := processArchive(&Archive{Zip, nil}, buf.Bytes(), fs)
+	files, err := processArchive(&Archive{Zip, nil}, buf.Bytes())
 	assertEqual(t, err, nil)
 
-	file1, _ := fs["test/file1.txt"]
-	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1.UTC()})
-	file2, _ := fs["test/file2.txt"]
-	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2.UTC()})
-	file3, _ := fs["test/file3.txt"]
-	assertEqual(t, file3, &mfs.File{[]byte("File 3"), mt3.UTC()})
-	_, ok := fs["test/dir"]
-	assertEqual(t, ok, false)
+	assertEqual(t, len(files), 3)
+	assertEqual(t, files[0], &file{"test/file1.txt", []byte("File 1"), mt1.UTC()})
+	assertEqual(t, files[1], &file{"test/file2.txt", []byte("File 2"), mt2.UTC()})
+	assertEqual(t, files[2], &file{"test/file3.txt", []byte("File 3"), mt3.UTC()})
 }
 
 func TestArchiveZipFilter(t *testing.T) {
-	fs := make(mfs.Files)
-
 	buf := new(bytes.Buffer)
 	w := zip.NewWriter(buf)
 
@@ -95,22 +85,15 @@ func TestArchiveZipFilter(t *testing.T) {
 		}
 	}
 
-	err := processArchive(&Archive{Zip, mapper}, buf.Bytes(), fs)
+	files, err := processArchive(&Archive{Zip, mapper}, buf.Bytes())
 	assertEqual(t, err, nil)
 
-	file1, _ := fs["test/file1.txt"]
-	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1.UTC()})
-	file2, _ := fs["test/file2.txt"]
-	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2.UTC()})
-	_, ok := fs["test/file3.txt"]
-	assertEqual(t, ok, false)
-	_, ok = fs["test/dir"]
-	assertEqual(t, ok, false)
+	assertEqual(t, len(files), 2)
+	assertEqual(t, files[0], &file{"test/file1.txt", []byte("File 1"), mt1.UTC()})
+	assertEqual(t, files[1], &file{"test/file2.txt", []byte("File 2"), mt2.UTC()})
 }
 
 func TestArchiveZipReMap(t *testing.T) {
-	fs := make(mfs.Files)
-
 	buf := new(bytes.Buffer)
 	w := zip.NewWriter(buf)
 
@@ -138,28 +121,20 @@ func TestArchiveZipReMap(t *testing.T) {
 
 	w.Close()
 
-	err := processArchive(&Archive{Zip, ReMap("(test/file[12].txt)", "${1}")}, buf.Bytes(), fs)
+	files, err := processArchive(&Archive{Zip, ReMap("(test/file[12].txt)", "${1}")}, buf.Bytes())
 	assertEqual(t, err, nil)
 
-	file1, _ := fs["test/file1.txt"]
-	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1.UTC()})
-	file2, _ := fs["test/file2.txt"]
-	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2.UTC()})
-	_, ok := fs["test/file3.txt"]
-	assertEqual(t, ok, false)
-	_, ok = fs["test/dir"]
-	assertEqual(t, ok, false)
+	assertEqual(t, len(files), 2)
+	assertEqual(t, files[0], &file{"test/file1.txt", []byte("File 1"), mt1.UTC()})
+	assertEqual(t, files[1], &file{"test/file2.txt", []byte("File 2"), mt2.UTC()})
 }
 
 func TestArchiveZipInvalid(t *testing.T) {
-	fs := make(mfs.Files)
-
-	err := processArchive(&Archive{Zip, nil}, []byte("1234"), fs)
+	_, err := processArchive(&Archive{Zip, nil}, []byte("1234"))
 	assertEqual(t, err, zip.ErrFormat)
 }
 
 func TestArchiveTarGz(t *testing.T) {
-	fs := make(mfs.Files)
 	buf := new(bytes.Buffer)
 	zw := gzip.NewWriter(buf)
 	w := tar.NewWriter(zw)
@@ -185,21 +160,16 @@ func TestArchiveTarGz(t *testing.T) {
 	w.Close()
 	zw.Close()
 
-	err := processArchive(&Archive{TarGz, nil}, buf.Bytes(), fs)
+	files, err := processArchive(&Archive{TarGz, nil}, buf.Bytes())
 	assertEqual(t, err, nil)
 
-	file1, _ := fs["test/file1.txt"]
-	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1})
-	file2, _ := fs["test/file2.txt"]
-	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2})
-	file3, _ := fs["test/file3.txt"]
-	assertEqual(t, file3, &mfs.File{[]byte("File 3"), mt3})
-	_, ok := fs["test/dir"]
-	assertEqual(t, ok, false)
+	assertEqual(t, len(files), 3)
+	assertEqual(t, files[0], &file{"test/file1.txt", []byte("File 1"), mt1})
+	assertEqual(t, files[1], &file{"test/file2.txt", []byte("File 2"), mt2})
+	assertEqual(t, files[2], &file{"test/file3.txt", []byte("File 3"), mt3})
 }
 
 func TestArchiveTarGzFilter(t *testing.T) {
-	fs := make(mfs.Files)
 	buf := new(bytes.Buffer)
 	zw := gzip.NewWriter(buf)
 	w := tar.NewWriter(zw)
@@ -234,29 +204,20 @@ func TestArchiveTarGzFilter(t *testing.T) {
 		}
 	}
 
-	err := processArchive(&Archive{TarGz, mapper}, buf.Bytes(), fs)
+	files, err := processArchive(&Archive{TarGz, mapper}, buf.Bytes())
 	assertEqual(t, err, nil)
 
-	file1, _ := fs["test/file1.txt"]
-	assertEqual(t, file1, &mfs.File{[]byte("File 1"), mt1})
-	file2, _ := fs["test/file2.txt"]
-	assertEqual(t, file2, &mfs.File{[]byte("File 2"), mt2})
-	_, ok := fs["test/file3.txt"]
-	assertEqual(t, ok, false)
-	_, ok = fs["test/dir"]
-	assertEqual(t, ok, false)
+	assertEqual(t, len(files), 2)
+	assertEqual(t, files[0], &file{"test/file1.txt", []byte("File 1"), mt1})
+	assertEqual(t, files[1], &file{"test/file2.txt", []byte("File 2"), mt2})
 }
 
 func TestArchiveTarGzInvalid(t *testing.T) {
-	fs := make(mfs.Files)
-
-	err := processArchive(&Archive{TarGz, nil}, []byte("1234"), fs)
+	_, err := processArchive(&Archive{TarGz, nil}, []byte("1234"))
 	assertEqual(t, err, io.ErrUnexpectedEOF)
 }
 
 func TestArchiveUnknown(t *testing.T) {
-	fs := make(mfs.Files)
-
-	err := processArchive(&Archive{-1, nil}, []byte("Test"), fs)
+	_, err := processArchive(&Archive{-1, nil}, []byte("Test"))
 	assertEqual(t, err, ErrArchiveUnknown)
 }
