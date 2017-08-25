@@ -5,15 +5,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
+)
+
+var (
+	// ErrNoMatch is returned when the glob does not match any file.
+	ErrNoMatch = errors.New("no match")
 )
 
 func retrieve(loc string) ([]*file, error) {
 	if strings.HasPrefix(loc, "http://") || strings.HasPrefix(loc, "https://") {
 		return retrieveHTTP(loc)
 	}
-	return retrieveFS(loc)
+
+	if hasMeta(loc) {
+		return retrieveGlob(loc)
+	}
+
+	return retrieveFile(loc)
 }
 
 func retrieveHTTP(url string) ([]*file, error) {
@@ -40,8 +51,8 @@ func retrieveHTTP(url string) ([]*file, error) {
 	return []*file{&file{url, data, modTime}}, nil
 }
 
-func retrieveFS(loc string) ([]*file, error) {
-	f, err := os.Open(loc)
+func retrieveFile(loc string) ([]*file, error) {
+	f, err := os.Open(filepath.FromSlash(loc))
 	if err != nil {
 		return nil, err
 	}
@@ -59,4 +70,60 @@ func retrieveFS(loc string) ([]*file, error) {
 	}
 
 	return []*file{&file{loc, data, modTime}}, nil
+}
+
+func retrieveGlob(loc string) ([]*file, error) {
+	// find longest prefix not containing globs
+	dirs := strings.Split(loc, "/")
+	i := 0
+
+	for ; i < len(dirs); i++ {
+		if hasMeta(dirs[i]) {
+			break
+		}
+	}
+
+	root := strings.Join(dirs[:i], "/") + "/"
+
+	matches, err := filepath.Glob(filepath.FromSlash(loc))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(matches) == 0 {
+		return nil, ErrNoMatch
+	}
+
+	files := []*file{}
+
+	for _, match := range matches {
+		path := strings.TrimPrefix(filepath.ToSlash(match), root)
+
+		f, err := os.Open(match)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err := ioutil.ReadAll(f)
+		if err != nil {
+			f.Close()
+			return nil, err
+		}
+
+		modTime := time.Now()
+		info, err := f.Stat()
+		if err == nil {
+			modTime = info.ModTime()
+		}
+
+		f.Close()
+
+		files = append(files, &file{path, data, modTime})
+	}
+
+	return files, nil
+}
+
+func hasMeta(path string) bool {
+	return strings.ContainsAny(path, "*?[")
 }

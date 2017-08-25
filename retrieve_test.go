@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -40,4 +41,14 @@ func TestRetrieveFile(t *testing.T) {
 func TestRetrieveFileNotExist(t *testing.T) {
 	_, err := retrieve("xxxx")
 	assertNotEqual(t, err, nil)
+}
+
+func TestRetrieveGlobNotExist(t *testing.T) {
+	_, err := retrieve("xxxx[0-9]xxxx")
+	assertEqual(t, err, ErrNoMatch)
+}
+
+func TestRetrieveGlobInvalid(t *testing.T) {
+	_, err := retrieve("[xxxx[")
+	assertEqual(t, err, filepath.ErrBadPattern)
 }

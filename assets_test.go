@@ -43,6 +43,73 @@ func TestCompile(t *testing.T) {
 	assertEqual(t, err, nil)
 }
 
+func TestRetrieveGlob(t *testing.T) {
+	dir, err := ioutil.TempDir("", "go-assets")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	err = os.MkdirAll(dir+"/test/t1", 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = os.MkdirAll(dir+"/test/t2", 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(dir+"/test/t1/file1.txt", []byte("File 1"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(dir+"/test/t1/file2.txt", []byte("File 2"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(dir+"/test/t2/file3.txt", []byte("File 3"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(dir+"/test/t2/file4.txt", []byte("File 4"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sources := []*Source{
+		{"newdir",
+			dir + "/test/t[12]/file[123].txt", nil, nil},
+	}
+
+	fs, err := Retrieve(sources)
+	assertEqual(t, err, nil)
+
+	file1, err := fs.Open("newdir/t1/file1.txt")
+	assertEqual(t, err, nil)
+	fdata1, err := ioutil.ReadAll(file1)
+	assertEqual(t, err, nil)
+	assertEqual(t, fdata1, []byte("File 1"))
+
+	file2, err := fs.Open("newdir/t1/file2.txt")
+	assertEqual(t, err, nil)
+	fdata2, err := ioutil.ReadAll(file2)
+	assertEqual(t, err, nil)
+	assertEqual(t, fdata2, []byte("File 2"))
+
+	file3, err := fs.Open("newdir/t2/file3.txt")
+	assertEqual(t, err, nil)
+	fdata3, err := ioutil.ReadAll(file3)
+	assertEqual(t, err, nil)
+	assertEqual(t, fdata3, []byte("File 3"))
+
+	_, err = fs.Open("newdir/t2/file4.txt")
+	assertNotEqual(t, err, nil)
+}
+
 func TestCompileArchive(t *testing.T) {
 	dir, err := ioutil.TempDir("", "go-assets")
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	mfs "github.com/ZoltanLajosKis/go-mapfs"
@@ -54,8 +55,9 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 		// Chekcsum and archive not supported for multiple files.
 		if len(retFiles) > 1 {
 			for _, file := range retFiles {
-				log.Printf("Created asset: %s ...", file.path)
-				files[file.path] = &mfs.File{file.data, file.modTime}
+				path := strings.TrimSuffix(source.Path, "/") + "/" + file.path
+				log.Printf("Created asset: %s ...", path)
+				files[path] = &mfs.File{file.data, file.modTime}
 			}
 			continue
 		}
