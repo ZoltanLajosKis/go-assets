@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-func retrieve(loc string) (*file, error) {
+func retrieve(loc string) ([]*file, error) {
 	if strings.HasPrefix(loc, "http://") || strings.HasPrefix(loc, "https://") {
 		return retrieveHTTP(loc)
 	}
 	return retrieveFS(loc)
 }
 
-func retrieveHTTP(url string) (*file, error) {
+func retrieveHTTP(url string) ([]*file, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -37,10 +37,10 @@ func retrieveHTTP(url string) (*file, error) {
 		modTime = time.Now()
 	}
 
-	return &file{url, data, modTime}, nil
+	return []*file{&file{url, data, modTime}}, nil
 }
 
-func retrieveFS(loc string) (*file, error) {
+func retrieveFS(loc string) ([]*file, error) {
 	f, err := os.Open(loc)
 	if err != nil {
 		return nil, err
@@ -58,5 +58,5 @@ func retrieveFS(loc string) (*file, error) {
 		modTime = info.ModTime()
 	}
 
-	return &file{loc, data, modTime}, nil
+	return []*file{&file{loc, data, modTime}}, nil
 }

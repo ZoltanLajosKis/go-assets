@@ -17,9 +17,10 @@ func TestRetrieveHttp(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
 	defer svr.Close()
-	file, err := retrieve(strings.Join([]string{svr.URL, "/assets.txt"}, ""))
+	files, err := retrieve(strings.Join([]string{svr.URL, "/assets.txt"}, ""))
 	assertEqual(t, err, nil)
-	assertEqual(t, file.data, []byte("Assets."))
+	assertEqual(t, len(files), 1)
+	assertEqual(t, files[0].data, []byte("Assets."))
 
 	_, err = retrieve(strings.Join([]string{svr.URL, "/xxxx"}, ""))
 	assertNotEqual(t, err, nil)
@@ -30,9 +31,10 @@ func TestRetrieveHttp(t *testing.T) {
 }
 
 func TestRetrieveFile(t *testing.T) {
-	file, err := retrieve("retrieve_test.go")
+	files, err := retrieve("retrieve_test.go")
 	assertEqual(t, err, nil)
-	assertEqual(t, len(file.data) > 0, true)
+	assertEqual(t, len(files), 1)
+	assertEqual(t, len(files[0].data) > 0, true)
 }
 
 func TestRetrieveFileNotExist(t *testing.T) {

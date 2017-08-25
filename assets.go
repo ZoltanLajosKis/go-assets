@@ -44,11 +44,26 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 	for i, source := range sources {
 		log.Printf("Processing asset source (%d/%d): %s ...", i+1, len(sources), source.Location)
 
-		file, err := retrieve(source.Location)
+		// Retrieve the file or files
+		retFiles, err := retrieve(source.Location)
 		if err != nil {
 			return nil, &RetrieveError{source.Location, err}
 		}
 
+		// If multiple files are returned store them and finish processing.
+		// Chekcsum and archive not supported for multiple files.
+		if len(retFiles) > 1 {
+			for _, file := range retFiles {
+				log.Printf("Created asset: %s ...", file.path)
+				files[file.path] = &mfs.File{file.data, file.modTime}
+			}
+			continue
+		}
+
+		// Process the single returned file
+		file := retFiles[0]
+
+		// Verify the file checksum if requested
 		if source.Checksum != nil {
 			err = verifyChecksum(source.Checksum, file.data)
 			if err != nil {
@@ -56,12 +71,14 @@ func Retrieve(sources []*Source) (http.FileSystem, error) {
 			}
 		}
 
+		// If the file is not an archive store it and finish processing.
 		if source.Archive == nil {
 			log.Printf("Created asset: %s ...", source.Path)
 			files[source.Path] = &mfs.File{file.data, file.modTime}
 			continue
 		}
 
+		// Extract files from the archive and store them.
 		archFiles, err := processArchive(source.Archive, file.data)
 		if err != nil {
 			return nil, &ArchiveError{source.Location, err}
