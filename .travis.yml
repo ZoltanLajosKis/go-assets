@@ -10,7 +10,9 @@ notifications:
     on_success: never
     on_failure: always
 
-before_install:
-  - go get github.com/mattn/goveralls
 script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
+    go test -coverprofile=cover.out -v
+after_success:
+  - go get github.com/mattn/goveralls
+  - goveralls -coverprofile=cover.out -service=travis-ci
+
